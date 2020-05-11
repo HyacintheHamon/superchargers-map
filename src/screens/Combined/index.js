@@ -18,6 +18,7 @@ const LONGITUDE_DELTA = 0.0421;
 
 export default class Combined extends Component {
     state = {
+        tracksViewChanges: true,
         currentPosition: {
             latitude: 0.0,
             longitude: 0.0,
@@ -25,6 +26,22 @@ export default class Combined extends Component {
         ionityDataSource: [],
         teslaDataSource: []
     };
+
+    stopTrackingViewChanges = () => {
+        this.setState(() => ({
+            tracksViewChanges: false,
+        }));
+    }
+
+    UNSAFE_componentWillReceiveProps(nextProps) {
+        if (this.shouldUpdate(nextProps)) {
+            this.setState(() => ({
+                tracksViewChanges: true,
+            }));
+        }
+    }
+
+    // shouldUpdate = (nextProps) => { //TODO implement }
 
     async getIonityDataSource() {
         await fetch("https://ionity.evapi.de/api/ionity/locations/")
@@ -81,29 +98,33 @@ export default class Combined extends Component {
 
             return this.state.ionityDataSource.map((ionityMarker, index) => {
 
-                console.log('Marker latitude :', ionityMarker.coords.lat);
-                console.log('Marker longitude :', ionityMarker.coords.lng);
+                // console.log('Marker latitude :', ionityMarker.coords.lat);
+                // console.log('Marker longitude :', ionityMarker.coords.lng);
 
                 if (ionityMarker.state == 1) {
                     return (
                         <Marker
                             key={index}
-                            tracksViewChanges={false}
+                            //tracksViewChanges={false}
+                            tracksViewChanges={this.state.tracksViewChanges}
                             coordinate={{ latitude: ionityMarker.coords.lat, longitude: ionityMarker.coords.lng }}
+                        //tracksViewChanges={false}
                         //cluster={true}
                         >
-                            <Image source={ionityMarkerImg} style={styles.ionityMarker} />
+                            <Image source={ionityMarkerImg} style={styles.ionityMarker} onLoad={this.stopTrackingViewChanges} fadeDuration={0} />
                         </Marker>
                     );
                 } else {
                     return (
                         <Marker
                             key={index}
-                            tracksViewChanges={false}
+                            //tracksViewChanges={false}
+                            tracksViewChanges={this.state.tracksViewChanges}
                             coordinate={{ latitude: ionityMarker.coords.lat, longitude: ionityMarker.coords.lng }}
+                        //tracksViewChanges={false}
                         //cluster={true}
                         >
-                            <Image source={ionityMarkerWhiteImg} style={styles.ionityMarker} />
+                            <Image source={ionityMarkerWhiteImg} style={styles.ionityMarker} onLoad={this.stopTrackingViewChanges} fadeDuration={0} />
                         </Marker>
                     );
                 }
@@ -124,26 +145,28 @@ export default class Combined extends Component {
                     return (
                         <Marker
                             key={index}
-                            tracksViewChanges={false}
+                            //tracksViewChanges={false}
+                            tracksViewChanges={this.state.tracksViewChanges}
                             coordinate={{ latitude: teslaMarker.AddressInfo.Latitude, longitude: teslaMarker.AddressInfo.Longitude }}
                             //cluster={true}
                             title={teslaMarker.AddressInfo.Title}
                             description={"Address: " + teslaMarker.AddressInfo.AddressLine1}
                         >
-                            <SuperchargerMarker style={styles.superchargerMarker} />
+                            <SuperchargerMarker style={styles.superchargerMarker} onLoad={this.stopTrackingViewChanges} />
                         </Marker>
                     );
                 } else {
                     return (
                         <Marker
                             key={index}
-                            tracksViewChanges={false}
+                            //tracksViewChanges={false}
+                            tracksViewChanges={this.state.tracksViewChanges}
                             coordinate={{ latitude: teslaMarker.AddressInfo.Latitude, longitude: teslaMarker.AddressInfo.Longitude }}
                             //cluster={true}
                             title={teslaMarker.AddressInfo.Title}
                             description={"Address: " + teslaMarker.AddressInfo.AddressLine1}
                         >
-                            <SuperchargerMarkerGrey style={styles.superchargerMarker} />
+                            <SuperchargerMarkerGrey style={styles.superchargerMarker} onLoad={this.stopTrackingViewChanges} />
                         </Marker>
                     );
                 }

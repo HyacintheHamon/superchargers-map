@@ -10,7 +10,9 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@apollo/client": "^3.0.0-beta.44",
     "@react-native-community/geolocation": "^2.0.2",
+    "apollo-link-rest": "^0.8.0-beta.0",
     "react": "16.11.0",
     "react-native": "0.62.2",
     "react-native-gesture-handler": "^1.6.1",

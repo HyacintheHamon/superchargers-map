@@ -17,12 +17,29 @@ const LONGITUDE_DELTA = 0.0421;
 export default class Ionity extends Component {
 
   state = {
+    tracksViewChanges: true,
     currentPosition: {
       latitude: 0.0,
       longitude: 0.0,
     },
     ionityDataSource: []
   };
+
+  stopTrackingViewChanges = () => {
+    this.setState(() => ({
+      tracksViewChanges: false,
+    }));
+  }
+
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    if (this.shouldUpdate(nextProps)) {
+      this.setState(() => ({
+        tracksViewChanges: true,
+      }));
+    }
+  }
+
+  // shouldUpdate = (nextProps) => { //TODO implement }
 
   async getIonityDataSource() {
     await fetch("https://ionity.evapi.de/api/ionity/locations/")
@@ -66,18 +83,19 @@ export default class Ionity extends Component {
 
       return this.state.ionityDataSource.map((marker, index) => {
 
-        console.log('Marker latitude :', marker.coords.lat);
-        console.log('Marker longitude :', marker.coords.lng);
+        //console.log('Marker latitude :', marker.coords.lat);
+        //console.log('Marker longitude :', marker.coords.lng);
 
         if (marker.state == 1) {
           return (
             <Marker
               key={index}
               //tracksViewChanges={false}
+              tracksViewChanges={this.state.tracksViewChanges}
               coordinate={{ latitude: marker.coords.lat, longitude: marker.coords.lng }}
             //cluster={true}
             >
-              <Image source={ionityMarker} style={styles.ionityMarker} />
+              <Image source={ionityMarker} style={styles.ionityMarker} onLoad={this.stopTrackingViewChanges} fadeDuration={0} />
             </Marker>
           );
         } else {
@@ -85,10 +103,11 @@ export default class Ionity extends Component {
             <Marker
               key={index}
               //tracksViewChanges={false}
+              tracksViewChanges={this.state.tracksViewChanges}
               coordinate={{ latitude: marker.coords.lat, longitude: marker.coords.lng }}
             //cluster={true}
             >
-              <Image source={ionityMarkerWhite} style={styles.ionityMarker} />
+              <Image source={ionityMarkerWhite} style={styles.ionityMarker} onLoad={this.stopTrackingViewChanges} fadeDuration={0} />
             </Marker>
           );
         }

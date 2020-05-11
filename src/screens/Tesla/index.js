@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { StyleSheet, SafeAreaView, Animated, Image, Dimensions } from "react-native";
+import { VIew, StyleSheet, SafeAreaView, Animated, Image, Dimensions } from "react-native";
 import MapView, { PROVIDER_GOOGLE, PROVIDER_DEFAULT, prototype, Marker } from 'react-native-maps';
 import mapStyle from '../../json/mapStyle.json'
 import { SuperchargerMarker } from '../../svg';
@@ -17,12 +17,30 @@ const LONGITUDE_DELTA = 0.0421;
 export default class Tesla extends Component {
 
     state = {
+        tracksViewChanges: true,
         currentPosition: {
             latitude: 0.0,
             longitude: 0.0,
         },
         teslaDataSource: []
     };
+
+
+    stopTrackingViewChanges = () => {
+        this.setState(() => ({
+            tracksViewChanges: false,
+        }));
+    }
+
+    UNSAFE_componentWillReceiveProps(nextProps) {
+        if (this.shouldUpdate(nextProps)) {
+            this.setState(() => ({
+                tracksViewChanges: true,
+            }));
+        }
+    }
+
+    // shouldUpdate = (nextProps) => { //TODO implement }
 
     async getTeslaDataSource() {
         await fetch("https://api.openchargemap.io/v3/poi/?output=json&operatorid=23&client=Tesla-Key&key=f272a852-9409-48dc-8f0f-f38360c7e1cd")
@@ -63,24 +81,26 @@ export default class Tesla extends Component {
 
     render() {
 
+
         mapTeslaMarkers = () => {
 
             return this.state.teslaDataSource.map((marker, index) => {
 
-                console.log('Marker latitude :', marker.AddressInfo.Latitude);
-                console.log('Marker longitude :', marker.AddressInfo.Longitude);
+                // console.log('Marker latitude :', marker.AddressInfo.Latitude);
+                // console.log('Marker longitude :', marker.AddressInfo.Longitude);
 
                 if (marker.StatusType.IsOperational == true) {
                     return (
                         <Marker
                             key={index}
                             //tracksViewChanges={false}
+                            tracksViewChanges={this.state.tracksViewChanges}
                             coordinate={{ latitude: marker.AddressInfo.Latitude, longitude: marker.AddressInfo.Longitude }}
                             //cluster={true}
                             title={marker.AddressInfo.Title}
                             description={"Address: " + marker.AddressInfo.AddressLine1}
                         >
-                            <SuperchargerMarker style={styles.superchargerMarker} />
+                            <SuperchargerMarker style={styles.superchargerMarker} onLoad={this.stopTrackingViewChanges} />
                         </Marker>
                     );
                 } else {
@@ -88,25 +108,19 @@ export default class Tesla extends Component {
                         <Marker
                             key={index}
                             //tracksViewChanges={false}
+                            tracksViewChanges={this.state.ztracksViewChanges}
                             coordinate={{ latitude: marker.AddressInfo.Latitude, longitude: marker.AddressInfo.Longitude }}
                             //cluster={true}
                             title={marker.AddressInfo.Title}
                             description={"Address: " + marker.AddressInfo.AddressLine1}
                         >
-                            <SuperchargerMarkerGrey style={styles.superchargerMarker} />
+                            <SuperchargerMarkerGrey style={styles.superchargerMarker} onLoad={this.stopTrackingViewChanges} />
                         </Marker>
                     );
                 }
             })
         }
 
-        if (this.state.loading) {
-            return (
-                <View style={styles.loader}>
-                    <ActivityIndicator size="large" color="#0c9" />
-                </View>
-            )
-        }
         return (
             <MapView
                 provider={PROVIDER_GOOGLE}
