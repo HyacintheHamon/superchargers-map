@@ -8,7 +8,7 @@ import Combined from '../screens/Combined/index';
 const RootStack = createBottomTabNavigator({
     Ionity: Ionity,
     Tesla: Tesla,
-    //Combined: Combined
+    Combined: Combined
 }, {
     tabBarOptions: {
         activeTintColor: '#000',

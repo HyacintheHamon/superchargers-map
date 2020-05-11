@@ -3,7 +3,7 @@ import { StyleSheet, SafeAreaView, Animated, Image, Dimensions } from "react-nat
 import MapView, { PROVIDER_GOOGLE, PROVIDER_DEFAULT, prototype, Marker } from 'react-native-maps';
 import mapStyle from '../../json/mapStyle.json'
 //import MapView from 'react-native-map-clustering';
-
+import Geolocation from '@react-native-community/geolocation';
 var StoreGlobal = require('../../stores/storeGlobal');
 var ionityMarker = require('../../img/ionity-marker.png');
 var ionityMarkerWhite = require('../../img/ionity-marker-white.png');
@@ -11,22 +11,22 @@ var ionityMarkerWhite = require('../../img/ionity-marker-white.png');
 const { width, height } = Dimensions.get("window");
 const CARD_HEIGHT = height / 4;
 const CARD_WIDTH = CARD_HEIGHT - 50;
+const LATITUDE_DELTA = 0.0922;
+const LONGITUDE_DELTA = 0.0421;
 
 export default class Ionity extends Component {
 
   state = {
-    region: {
-      latitude: StoreGlobal.currentLatitude,
-      longitude: StoreGlobal.currentLatitude,
-      latitudeDelta: 0.04864195044303443,
-      longitudeDelta: 0.040142817690068,
+    currentPosition: {
+      latitude: 0.0,
+      longitude: 0.0,
     },
     ionityDataSource: []
   };
 
   async getIonityDataSource() {
     await fetch("https://ionity.evapi.de/api/ionity/locations/")
-      .then(response => response.json())
+      .then(async response => await response.json())
       .then((responseJson) => {
         this.setState({
           loading: false,
@@ -37,7 +37,27 @@ export default class Ionity extends Component {
   }
 
   componentDidMount() {
+
+    Geolocation.getCurrentPosition(
+      (position) => {
+        this.setState({
+          currentPosition: {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          }
+        });
+      },
+      (error) => this.setState({ error: error.message }),
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
+    );
+
     this.getIonityDataSource();
+  }
+
+  componentWillUnmount = () => {
+
+    Geolocation.clearWatch(this.watchID);
+
   }
 
   render() {
@@ -53,7 +73,7 @@ export default class Ionity extends Component {
           return (
             <Marker
               key={index}
-              tracksViewChanges={false}
+              //tracksViewChanges={false}
               coordinate={{ latitude: marker.coords.lat, longitude: marker.coords.lng }}
             //cluster={true}
             >
@@ -64,7 +84,7 @@ export default class Ionity extends Component {
           return (
             <Marker
               key={index}
-              tracksViewChanges={false}
+              //tracksViewChanges={false}
               coordinate={{ latitude: marker.coords.lat, longitude: marker.coords.lng }}
             //cluster={true}
             >
@@ -108,7 +128,12 @@ export default class Ionity extends Component {
         //clusterBorderColor='#fff'
         //clusterBorderWidth={4}
         region={this.state.region}
-        style={styles.container}
+        region={{
+          latitude: this.state.currentPosition.latitude,
+          longitude: this.state.currentPosition.longitude,
+          latitudeDelta: LATITUDE_DELTA,
+          longitudeDelta: LONGITUDE_DELTA,
+        }}
       >
         {mapMarkers()}
       </MapView>

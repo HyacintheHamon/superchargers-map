@@ -5,28 +5,28 @@ import mapStyle from '../../json/mapStyle.json'
 import { SuperchargerMarker } from '../../svg';
 import { SuperchargerMarkerGrey } from '../../svg';
 //import MapView from 'react-native-map-clustering';
-
+import Geolocation from '@react-native-community/geolocation';
 var StoreGlobal = require('../../stores/storeGlobal');
 
 const { width, height } = Dimensions.get("window");
 const CARD_HEIGHT = height / 4;
 const CARD_WIDTH = CARD_HEIGHT - 50;
+const LATITUDE_DELTA = 0.0922;
+const LONGITUDE_DELTA = 0.0421;
 
 export default class Tesla extends Component {
 
     state = {
-        region: {
-            latitude: StoreGlobal.currentLatitude,
-            longitude: StoreGlobal.currentLatitude,
-            latitudeDelta: 0.04864195044303443,
-            longitudeDelta: 0.040142817690068,
+        currentPosition: {
+            latitude: 0.0,
+            longitude: 0.0,
         },
         teslaDataSource: []
     };
 
     async getTeslaDataSource() {
         await fetch("https://api.openchargemap.io/v3/poi/?output=json&operatorid=23&client=Tesla-Key&key=f272a852-9409-48dc-8f0f-f38360c7e1cd")
-            .then(response => response.json())
+            .then(async response => await response.json())
             .then((responseJson) => {
                 this.setState({
                     loading: false,
@@ -37,7 +37,28 @@ export default class Tesla extends Component {
     }
 
     componentDidMount() {
+
+        Geolocation.getCurrentPosition(
+            (position) => {
+                this.setState({
+                    currentPosition: {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                    }
+                });
+            },
+            (error) => this.setState({ error: error.message }),
+            { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
+        );
+
         this.getTeslaDataSource();
+
+    }
+
+    componentWillUnmount = () => {
+
+        Geolocation.clearWatch(this.watchID);
+
     }
 
     render() {
@@ -53,7 +74,7 @@ export default class Tesla extends Component {
                     return (
                         <Marker
                             key={index}
-                            tracksViewChanges={false}
+                            //tracksViewChanges={false}
                             coordinate={{ latitude: marker.AddressInfo.Latitude, longitude: marker.AddressInfo.Longitude }}
                             //cluster={true}
                             title={marker.AddressInfo.Title}
@@ -66,7 +87,7 @@ export default class Tesla extends Component {
                     return (
                         <Marker
                             key={index}
-                            tracksViewChanges={false}
+                            //tracksViewChanges={false}
                             coordinate={{ latitude: marker.AddressInfo.Latitude, longitude: marker.AddressInfo.Longitude }}
                             //cluster={true}
                             title={marker.AddressInfo.Title}
@@ -109,7 +130,12 @@ export default class Tesla extends Component {
                 //clusterTextColor='#fff'
                 //clusterBorderColor='#fff'
                 //clusterBorderWidth={4}
-                region={this.state.region}
+                region={{
+                    latitude: this.state.currentPosition.latitude,
+                    longitude: this.state.currentPosition.longitude,
+                    latitudeDelta: LATITUDE_DELTA,
+                    longitudeDelta: LONGITUDE_DELTA,
+                }}
                 style={styles.container}
             >
                 {mapTeslaMarkers()}
